@@ -19,6 +19,31 @@ get_conf_interval <- function(sample_mean, std_err, t_val){
   return(interval)
 }
 
+#### PROBLEM 1 #############
+mean = 75.5
+sd = 3.5
+n = 6
+se = sd/sqrt(n)
+se_tranformed = (1/(2*sqrt(mean)))*se
+n_min = ceiling(((1/(2*sqrt(mean)))*sd/0.03)^2)
+rm(list=ls())
+
+#### PROBLEM 2 #############
+n1 = 16
+n2 = 9
+mean1 = 75
+mean2 = 70
+sigma1 = 8
+sigma2 = 12
+std_err = sqrt(sigma1^2/n1 + sigma2^2/n2)
+
+ans_a = pt((4-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)
+ans_b = pt((5.5-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)- pt((3.5-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)
+
+n = ceiling((sqrt(sigma1^2 + sigma2^2)/2.5)^2)
+
+rm(list=ls())
+
 #### PROBLEM 3 ##############
 mu_x = 5.2
 mu_y = 3.4
