@@ -37,7 +37,7 @@ sigma1 = 8
 sigma2 = 12
 std_err = sqrt(sigma1^2/n1 + sigma2^2/n2)
 
-ans_a = pt((4-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)
+ans_a = 1 - pt((4-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)
 ans_b = pt((5.5-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)- pt((3.5-(mean1-mean2))/std_err, df=n1+n2-2, lower.tail = TRUE, log.p = FALSE)
 
 n = ceiling((sqrt(sigma1^2 + sigma2^2)/2.5)^2)
@@ -59,6 +59,8 @@ sigma = sqrt(sigma_x^2 + sigma_y^2 + 4*sigma_z^2)
 print(mu)
 print(sigma)
 
+rm(list = ls())
+
 #### PROBLEM 4 ##############
 data = read.csv("./rain_pH.csv")
 N = length(data$rain.pH)
@@ -79,13 +81,17 @@ if(p_value < alpha){
   print('H0 is correct')
 }
 
+png(file='q4.png')
 qqPlot(data$rain.pH, distribution = "norm")
+dev.off()
 
+rm(list = ls())
 
 ### PROBLEM 5 ##################
 data = read.csv("./ceramic.csv")
 sample_mean = mean(data$Yield)
 N = length(data$Yield)
+sample_sd = sd(data$Yield)
 std_err = sd(data$Yield)/sqrt(N)
 
 ci = c(0.90, 0.95)
@@ -123,15 +129,22 @@ if(p_value < alpha){
   print('H0 is correct')
 }
 
+png(file='q5a.png')
 qqPlot(data$Yield, distribution = "norm")
+dev.off()
+
+png(file='q5b.png')
 hist(data$Yield, main = '', xlab = 'Yield')
+dev.off()
+
 shapiro.test(data$Yield)
 
+rm(list = ls())
 ########## PROBLEM 6 ############
 data = read.csv("./fiber_ash.csv")$Fiber_Ash
 sample_mean = mean(data)
 N = length(data)
-std_err = var(data)/sqrt(N)
+std_err = sd(data)/sqrt(N)
 
 ci = 0.99
 t_val = t_value(ci, N-1)
@@ -147,6 +160,7 @@ if(p_value < alpha){
 }
 
 print(paste0('Central Limit Theorem Applies ?', N>30))
+rm(list = ls())
 
 ############# PROBLEM 7 ##############
 N = 20
@@ -169,6 +183,7 @@ mu1 = 130.25
 n = ceiling(((qt(1-alpha/2,df=Inf)+qt(1-beta,df=Inf))*sample_sd/(mu1-mu0))^2)
 n = ceiling(((qt(1-alpha/2,df=n-1)+qt(1-beta,df=n-1))*sample_sd/(mu1-mu0))^2)
 print(n)
+rm(list = ls())
 
 ############# PROBLEM 8 ##############
 data = read.csv("./pipes.csv")
@@ -201,3 +216,4 @@ ci = 0.90
 t_val = t_value(ci, n1+n2-2)
 interval = get_conf_interval(sample_mean_1-sample_mean_2, std_err, t_val)
 
+rm(list = ls())
