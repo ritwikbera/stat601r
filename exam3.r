@@ -47,6 +47,9 @@ power <- 1 - (pt(abs(t), df=df, ncp=ncp) - pt(-abs(t), df=df, ncp=ncp))
 
 beta = 0.05
 n = ceiling((qt(alpha/2,df)+qt(beta,df))*sd_hat/(-2))^2
+df = 2*n-2
+n = ceiling((qt(alpha/2,df)+qt(beta,df))*sd_hat/(-2))^2
+
 
 rm(list = ls())
 
@@ -61,6 +64,11 @@ n = 250
 
 mean_x = sum_x/n
 mean_y = sum_y/n
+
+sigma_hat_xy = (sum_xy - n*mean_x*mean_y)*1/(n-1)
+Sx = sqrt((sum_x2 - n*mean_x^2)*1/(n-1))
+Sy = sqrt((sum_y2 - n*mean_y^2)*1/(n-1))
+rho_xy = sigma_hat_xy/(Sx*Sy)
 
 beta1 = (sum_xy - n*mean_x*mean_y)/(sum_x2 - n*mean_x^2)
 beta0 = mean_y - beta1*mean_x
@@ -96,69 +104,73 @@ data <- data.table(df)
 n = length(data$taxes)
 
 # as.data.frame(data).sale_price
-var(data$sale_price)
-var(data$taxes)
+y <- data$sale_price
+x <- data$taxes
 
-# linear model check
-model <- lm(sale_price ~ taxes, data=data)
-anova_stats <- anova(model)
-residuals <- resid(model)
-stdres <- rstandard(model)
-durbinWatsonTest(model)
+sigma2 <- var(y)
+
+beta1 = (sum(x*y) - n*mean(x)*mean(y))/(sum(x^2)-n*mean(x)^2)
+beta0 = mean(y) - beta1*mean(x)
+
+y_hat <- beta0 + beta1*x
+ei <- y - y_hat
+dW <- sum((ei[2:length(ei)] - ei[1:length(ei)-1])^2)/sum(ei^2)
 
 # should be random, no apparent pattern detected
-plot(data$taxes, stdres, ylab="Standardized Residuals", xlab="Taxes",
+plot(x, ei, ylab="Standardized Residuals", xlab="Taxes",
      main="Residual Plot")
 abline(0,0)
 
 # normality check, similar variance
-qqPlot(stdres, ylab = "Standardized Residual quantiles", main="Normal Probaility Plot", distribution = "norm")
+qqPlot(ei, ylab = "Standardized Residual quantiles", main="Normal Probaility Plot", distribution = "norm")
 
-# predicted model plot
-coeffs <- coefficients(model)
-fit <- fitted(model)
-pred_sales <- coeffs[1] + coeffs[2]*(data$taxes)
+residuals = ei
 
 # error metrics
 ss_error = sum(residuals^2)
 df_error = n - 2
 ms_error = ss_error/df_error
 
-y = data$sale_price
-ss_model = sum((fit - mean(y))^2)
-df_model = n - 1
+ss_model = sum((beta0 + beta1*x - mean(y))^2)
+df_model = 2 - 1
 ms_model = ss_model/df_model
 
 R2 = ss_model/(ss_model+ss_error)
 
-x = data$taxes
 se_slope = sqrt(ms_error)/sqrt((n-1)*var(x))
 se_intercept = sqrt(ms_error)*sqrt(1/n+(0-mean(x))^2/((n-1)*var(x)))
 
 F_stat = ms_model/ms_error
 
-t_val_slope = coeffs[2]/se_slope
+t_val_slope = beta1/se_slope
 p_val_t =  2*pt(t_val_slope, df_error, lower.tail = FALSE)
-p_val_F = 2*pf(F_stat, df_model, df_error, lower.tail = FALSE)
+p_val_F = pf(F_stat, df_model, df_error, lower.tail = FALSE)
   
+data$predictions <- y_hat
+
 # linear model plot
-p <- ggplot(data, aes(x=taxes, y=sale_price)) 
-p <- p + geom_point() 
-p <- p + stat_smooth(method=lm)
+p <- ggplot() 
+p <- p + geom_point(data=data, aes(x=taxes, y=sale_price), color="blue")
+p <- p + geom_point(data=data, aes(x=taxes, y=predictions)) 
+
+for (val in c(1:length(data$taxes))){
+  p <- p + geom_segment(x=data$taxes[val], y=data$sale_price[val], xend=data$taxes[val], yend=data$predictions[val])
+}
+# p <- p + stat_smooth(method=lm)
 
 print(p)
+
+###### For verification only ########
+
+# linear model check
+model <- lm(sale_price ~ taxes, data=data)
+durbinWatsonTest(model)
+summary(model)
 
 # quadratic model check
 data$taxes2 <- data$taxes^2
 quad_model <- lm(sale_price ~ taxes + taxes2, data=data)
-coefficients(quad_model)
 summary(quad_model)
-
-# correlation between data
-rho_xy_sample <- cor(data$sale_price, data$taxes)
-confint(model)
-summary(model)
-sigma(model)
 
 rm(list = ls())
 
